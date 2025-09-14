@@ -1,6 +1,7 @@
 import { ShoppingCart, MessageCircle, Instagram, Search, Menu, User, LogOut, Package, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -18,8 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import AdvancedSearch from "@/components/AdvancedSearch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -27,10 +26,9 @@ import { useState } from "react";
 interface HeaderProps {
   cartItemCount: number;
   onCartClick: () => void;
-  onSearch?: (query: string) => void;
 }
 
-const Header = ({ cartItemCount, onCartClick, onSearch }: HeaderProps) => {
+const Header = ({ cartItemCount, onCartClick }: HeaderProps) => {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,21 +57,6 @@ const Header = ({ cartItemCount, onCartClick, onSearch }: HeaderProps) => {
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  };
-
-  const handleAdvancedSearch = (query: string, filters?: any) => {
-    // Advanced search with filters
-    const searchParams = new URLSearchParams({ q: query });
-    
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value && (Array.isArray(value) ? value.length > 0 : true)) {
-          searchParams.set(key, Array.isArray(value) ? value.join(',') : value.toString());
-        }
-      });
-    }
-    
-    navigate(`/search?${searchParams.toString()}`);
   };
 
   return (
@@ -113,6 +96,10 @@ const Header = ({ cartItemCount, onCartClick, onSearch }: HeaderProps) => {
                       {categories.map((category) => (
                         <NavigationMenuLink
                           key={category}
+                          onClick={() => {
+                            const categorySlug = category.toLowerCase().replace(/\s+/g, '-');
+                            navigate(`/category/${categorySlug}`);
+                          }}
                           className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
                         >
                           <div className="text-sm font-medium leading-none text-automotive">
@@ -145,13 +132,19 @@ const Header = ({ cartItemCount, onCartClick, onSearch }: HeaderProps) => {
 
           {/* Search and Actions */}
           <div className="flex items-center space-x-4">
-            {/* Advanced Search */}
+            {/* Simple Search */}
             <div className="hidden md:block">
-              <AdvancedSearch 
-                onSearch={handleAdvancedSearch}
-                placeholder="Find Parts For Vehicle"
-                className="w-80"
-              />
+              <form onSubmit={handleSearch} className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    placeholder="Search for auto parts..."
+                    className="pl-10 pr-4 w-80"
+                  />
+                </div>
+              </form>
             </div>
 
             {/* User Menu or Login */}

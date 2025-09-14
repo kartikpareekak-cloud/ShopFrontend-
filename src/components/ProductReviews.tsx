@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 
 interface Review {
   _id: string;
@@ -401,7 +401,7 @@ export default function ProductReviews() {
                       {new Date(review.createdAt).toLocaleDateString()}
                     </span>
                     
-                    {user && user.id === review.user._id && (
+                    {user && user._id === review.user._id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -440,7 +440,7 @@ export default function ProductReviews() {
                     Helpful ({review.helpfulCount})
                   </Button>
                   
-                  {user && user.id !== review.user._id && (
+                  {user && user._id !== review.user._id && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">

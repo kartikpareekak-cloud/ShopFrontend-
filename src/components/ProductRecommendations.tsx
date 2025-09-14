@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import LazyImage from '@/components/LazyImage';
 import { AutoFallbackImage } from '@/components/ui/AutoFallbackImage';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import api from '@/lib/api';
 
 interface Product {

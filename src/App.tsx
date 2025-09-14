@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import SearchResults from "./pages/SearchResults";
 import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
+import CategoryPage from "./pages/CategoryPage";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/search" element={<SearchResults />} />
             <Route path="/search-advanced" element={<SearchPage />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />

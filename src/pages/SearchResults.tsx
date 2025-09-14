@@ -132,20 +132,11 @@ const SearchResults = () => {
     });
   };
 
-  const handleSearch = (searchQuery: string) => {
-    searchProducts(searchQuery);
-  };
-
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Header 
         cartItemCount={cartItems.length}
         onCartClick={() => setIsCartOpen(true)}
-        onSearch={handleSearch}
       />
       
       <main className="container mx-auto px-4 py-8">

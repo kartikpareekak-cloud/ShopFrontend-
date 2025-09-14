@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import AdvancedSearch from '@/components/AdvancedSearch';
 import ProductComparison from '@/components/ProductComparison';
 import LazyImage from '@/components/LazyImage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Grid3X3,
   List,
-  Filter,
   Star,
   ShoppingCart,
   Eye,
-  Heart
+  Search
 } from 'lucide-react';
 
 interface Product {
@@ -274,11 +273,31 @@ const SearchPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Advanced Search Component */}
+        {/* Simple Search Component */}
         <div className="mb-8">
-          <AdvancedSearch
-            onSearch={handleSearchSubmit}
-          />
+          <Card>
+            <CardContent className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const query = formData.get('search') as string;
+                handleSearchSubmit(query, {});
+              }}>
+                <div className="flex gap-4">
+                  <Input
+                    name="search"
+                    placeholder="Search for products..."
+                    defaultValue={searchQuery}
+                    className="flex-1"
+                  />
+                  <Button type="submit">
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search Results Header */}

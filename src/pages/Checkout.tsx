@@ -201,13 +201,14 @@ const Checkout = () => {
     
     // Validate cart items have valid product IDs
     const invalidItems = cartItems.filter(item => 
-      !item.id || typeof item.id === 'string' && item.id.length < 20
+      !item.id || (typeof item.id === 'string' && item.id.length < 12) || !item.id.match(/^[0-9a-fA-F]{24}$|^[0-9a-fA-F]{12}$/)
     );
     
     if (invalidItems.length > 0) {
+      console.log('Invalid items found:', invalidItems);
       toast({
         title: 'Invalid Products',
-        description: 'Please add products from the product catalog before placing an order.',
+        description: 'Some products in your cart are invalid. Please remove and re-add them from the product catalog.',
         variant: 'destructive',
       });
       return;

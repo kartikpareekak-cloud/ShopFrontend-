@@ -17,7 +17,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import axios from 'axios';
+import api from '@/lib/api';
 
 interface DashboardStats {
   totalProducts: number;
@@ -97,16 +97,16 @@ const AdminDashboard: React.FC = () => {
         customersRes,
         customerAnalyticsRes
       ] = await Promise.all([
-        axios.get('http://localhost:5004/api/products'),
-        axios.get('http://localhost:5004/api/orders'),
-        axios.get('http://localhost:5004/api/admin/customers'),
-        axios.get('http://localhost:5004/api/admin/customers/analytics')
+        api.get('/products'),
+        api.get('/orders'),
+        api.get('/admin/customers'),
+        api.get('/admin/customers/analytics')
       ]);
 
-      const products = productsRes.data;
-      const orders = ordersRes.data;
-      const customers = customersRes.data;
-      const analytics = customerAnalyticsRes.data;
+      const products = productsRes;
+      const orders = ordersRes;
+      const customers = customersRes;
+      const analytics = customerAnalyticsRes;
 
       // Calculate stats
       const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.total, 0);

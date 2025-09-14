@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,27 +10,42 @@ import api from '@/lib/api';
 
 interface Order {
   _id: string;
-  orderItems: Array<{
+  items?: Array<{
     name: string;
     quantity: number;
     price: number;
     image?: string;
   }>;
-  shippingAddress: {
-    fullName: string;
-    phone: string;
-    email: string;
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
+  orderItems?: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    image?: string;
+  }>;
+  shippingAddress?: {
+    fullName?: string;
+    phone?: string;
+    email?: string;
+    street?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    pincode?: string;
+    country?: string;
   };
-  paymentMethod: string;
-  itemsPrice: number;
-  shippingPrice: number;
-  totalPrice: number;
-  orderStatus: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  customerInfo?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  paymentMethod?: string;
+  itemsPrice?: number;
+  shippingPrice?: number;
+  totalPrice?: number;
+  total?: number; // Some orders might have this field instead
+  status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  orderStatus?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
@@ -44,11 +59,23 @@ const MyOrders = () => {
     const fetchOrders = async () => {
       try {
         const response = await api.get('/orders/my-orders');
-        if (response.data.success) {
-          setOrders(response.data.data);
+        
+        // Handle different response formats
+        let ordersData = [];
+        if (response.data?.success && response.data?.data) {
+          ordersData = response.data.data;
+        } else if (response.data && Array.isArray(response.data)) {
+          ordersData = response.data;
+        } else if (response && Array.isArray(response)) {
+          ordersData = response;
         }
+        
+        console.log('Orders response:', response.data);
+        console.log('Parsed orders:', ordersData);
+        setOrders(ordersData);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
+        setOrders([]);
       } finally {
         setLoading(false);
       }
@@ -128,56 +155,62 @@ const MyOrders = () => {
         <h1 className="text-3xl font-bold mb-6">My Orders</h1>
         
         <div className="space-y-6">
-          {orders.map((order) => (
-            <Card key={order._id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">
-                      Order #{order._id.slice(-8).toUpperCase()}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
+          {orders.map((order) => {
+            // Handle different field names for backward compatibility
+            const orderStatus = order.status || order.orderStatus || 'pending';
+            const orderItems = order.items || order.orderItems || [];
+            const orderTotal = order.total || order.totalPrice || 0;
+            
+            return (
+              <Card key={order._id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">
+                        Order #{order._id.slice(-8).toUpperCase()}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    <Badge className={getStatusColor(orderStatus)}>
+                      <span className="flex items-center gap-1">
+                        {getStatusIcon(orderStatus)}
+                        {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+                      </span>
+                    </Badge>
                   </div>
-                  <Badge className={getStatusColor(order.orderStatus)}>
-                    <span className="flex items-center gap-1">
-                      {getStatusIcon(order.orderStatus)}
-                      {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
-                    </span>
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Order Items */}
-                  <div>
-                    <h4 className="font-medium mb-3">Items ({order.orderItems.length})</h4>
-                    <div className="space-y-3">
-                      {order.orderItems.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-3">
-                          <AutoFallbackImage 
-                            src={item.image} 
-                            alt={item.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{item.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Qty: {item.quantity} × ₹{item.price.toLocaleString()}
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Order Items */}
+                    <div>
+                      <h4 className="font-medium mb-3">Items ({orderItems.length})</h4>
+                      <div className="space-y-3">
+                        {orderItems.map((item, index) => (
+                          <div key={index} className="flex items-center space-x-3">
+                            <AutoFallbackImage 
+                              src={item.image || '/placeholder.svg'} 
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{item.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Qty: {item.quantity} × ₹{item.price.toLocaleString()}
+                              </p>
+                            </div>
+                            <p className="font-medium">
+                              ₹{(item.price * item.quantity).toLocaleString()}
                             </p>
                           </div>
-                          <p className="font-medium">
-                            ₹{(item.price * item.quantity).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
                   </div>
 
                   <Separator />
@@ -189,12 +222,12 @@ const MyOrders = () => {
                       Delivery Address
                     </h4>
                     <div className="text-sm text-muted-foreground">
-                      <p>{order.shippingAddress.fullName}</p>
-                      <p>{order.shippingAddress.street}</p>
+                      <p>{order.shippingAddress?.fullName || order.customerInfo?.name || 'N/A'}</p>
+                      <p>{order.shippingAddress?.street || order.shippingAddress?.address || 'N/A'}</p>
                       <p>
-                        {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
+                        {order.shippingAddress?.city || 'N/A'}, {order.shippingAddress?.state || 'N/A'} {order.shippingAddress?.zipCode || order.shippingAddress?.pincode || 'N/A'}
                       </p>
-                      <p>Phone: {order.shippingAddress.phone}</p>
+                      <p>Phone: {order.shippingAddress?.phone || order.customerInfo?.phone || 'N/A'}</p>
                     </div>
                   </div>
 
@@ -204,16 +237,16 @@ const MyOrders = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm text-muted-foreground">Payment Method</p>
-                      <p className="font-medium">{order.paymentMethod}</p>
+                      <p className="font-medium">{order.paymentMethod || 'COD'}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <p className="font-bold text-lg">₹{order.totalPrice.toLocaleString()}</p>
+                      <p className="font-bold text-lg">₹{orderTotal.toLocaleString()}</p>
                     </div>
                   </div>
 
                   {/* Track Order Button */}
-                  {(order.orderStatus === 'confirmed' || order.orderStatus === 'shipped') && (
+                  {(orderStatus === 'confirmed' || orderStatus === 'shipped') && (
                     <div className="pt-4">
                       <Button variant="outline" className="w-full sm:w-auto">
                         Track Package
@@ -223,7 +256,8 @@ const MyOrders = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -36,7 +36,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import axios from 'axios';
 import api from '@/lib/api';
 
 interface Customer {
@@ -85,7 +84,7 @@ const CustomersManagement: React.FC = () => {
   const fetchCustomers = async () => {
     try {
       const response = await api.get('/admin/customers');
-      setCustomers(response.customers || []);
+      setCustomers(response || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast({
@@ -101,7 +100,7 @@ const CustomersManagement: React.FC = () => {
   const fetchCustomerOrders = async (customerId: string) => {
     try {
       const response = await api.get(`/admin/customers/${customerId}/orders`);
-      setCustomerOrders(response.orders || []);
+      setCustomerOrders(response || []);
     } catch (error) {
       console.error('Error fetching customer orders:', error);
       toast({

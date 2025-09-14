@@ -25,8 +25,10 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
   updateProfile: (userData: Partial<User>) => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
   loading: boolean;
   isAdmin: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,6 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAdmin = user?.role === 'admin';
+  const isAuthenticated = !!user && !!token;
 
   const value: AuthContextType = {
     user,
@@ -116,8 +119,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    updateUser: updateProfile, // Alias for updateProfile
     loading,
     isAdmin,
+    isAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
