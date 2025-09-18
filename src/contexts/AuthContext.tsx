@@ -22,6 +22,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  adminLogin: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
   updateProfile: (userData: Partial<User>) => Promise<void>;
@@ -66,6 +67,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('token', userData.token);
       localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
+      throw error;
+    }
+  };
+
+  const adminLogin = async (email: string, password: string) => {
+    try {
+      console.log('AuthContext: Starting admin login for', email);
+      const response = await api.post('/auth/admin-login', { email, password });
+      
+      // The API interceptor returns response.data, which contains { success, message, data }
+      // The actual user data is in the data field
+      const { data: userData } = response;
+      console.log('AuthContext: Admin login response received:', userData);
+
+      setUser(userData);
+      setToken(userData.token);
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      console.log('AuthContext: Admin login state updated successfully');
+      console.log('AuthContext: User role is now:', userData.role);
+    } catch (error) {
+      console.error('AuthContext: Admin login error:', error);
       throw error;
     }
   };
@@ -116,6 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     token,
     login,
+    adminLogin,
     register,
     logout,
     updateProfile,

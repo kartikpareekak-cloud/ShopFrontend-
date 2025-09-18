@@ -17,7 +17,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { login } = useAuth();
+  const { login, adminLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +34,51 @@ export default function Login() {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
-      navigate('/');
+      // Check if this is admin login attempt
+      const isAdminCredentials = formData.email === 'abhishek@gmail.com' && formData.password === 'Abhi@1234';
+      
+      if (isAdminCredentials) {
+        console.log('Admin credentials detected, using admin login');
+        await adminLogin(formData.email, formData.password);
+        
+        // Wait a bit for the context to update
+        setTimeout(() => {
+          console.log('Admin login successful, checking localStorage...');
+          const storedUser = localStorage.getItem('user');
+          const storedToken = localStorage.getItem('token');
+          console.log('Stored user:', storedUser);
+          console.log('Stored token:', storedToken ? 'Yes' : 'No');
+          
+          if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            console.log('User data:', userData);
+            console.log('User role:', userData.role);
+          }
+          
+          console.log('Redirecting to admin panel...');
+          navigate('/admin');
+        }, 100);
+      } else {
+        await login(formData.email, formData.password);
+        
+        // Get updated user from auth context after login
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          
+          // Redirect based on user role
+          if (userData.role === 'admin') {
+            console.log('Admin user detected, redirecting to admin panel');
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        } else {
+          navigate('/');
+        }
+      }
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);

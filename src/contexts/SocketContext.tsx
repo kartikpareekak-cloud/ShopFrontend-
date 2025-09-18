@@ -141,6 +141,17 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
         }
       });
 
+      // Order status change notifications (for admin)
+      newSocket.on('order_status_changed', (data: any) => {
+        if (user?.role === 'admin') {
+          toast({
+            title: "Order Status Changed",
+            description: `Order #${data.orderNumber} changed from ${data.oldStatus} to ${data.newStatus}`,
+          });
+          window.dispatchEvent(new CustomEvent('order-status-updated', { detail: data }));
+        }
+      });
+
       // Inventory low stock alerts
       newSocket.on('low_stock_alert', (data: any) => {
         if (user?.role === 'admin') {

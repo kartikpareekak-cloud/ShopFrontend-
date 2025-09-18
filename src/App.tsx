@@ -27,6 +27,7 @@ import Register from "./pages/Register";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import MyOrders from "./pages/MyOrders";
+import Invoice from "./pages/Invoice";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProductUpload from "./pages/admin/ProductUpload";
@@ -35,6 +36,7 @@ import CategoryManagement from "./pages/admin/CategoryManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
 import CustomersManagement from "./pages/admin/CustomersManagement";
 import SettingsManagement from "./pages/admin/SettingsManagement";
+import TestAdminLogin from "./pages/TestAdminLogin";
 import Error from "./pages/Error";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorHandling";
@@ -64,6 +66,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/comparison" element={<Comparison />} />
+            <Route path="/test-admin" element={<TestAdminLogin />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
@@ -81,6 +84,11 @@ const App = () => (
             <Route path="/orders" element={
               <ProtectedRoute>
                 <MyOrders />
+              </ProtectedRoute>
+            } />
+            <Route path="/invoice/:orderId" element={
+              <ProtectedRoute>
+                <Invoice />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

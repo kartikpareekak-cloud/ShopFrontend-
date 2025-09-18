@@ -38,7 +38,10 @@ interface Product {
   price: number;
   originalPrice?: number;
   description: string;
-  category: string;
+  category: {
+    _id: string;
+    name: string;
+  } | string; // Can be populated object or just string ID
   stock: number;
   image: string;
   createdAt: string;
@@ -72,8 +75,18 @@ const ProductsManagement: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
+    console.log('ProductsManagement component mounted');
+    
+    // Add a small delay to prevent rapid mounting/unmounting
+    const timer = setTimeout(() => {
+      fetchProducts();
+      fetchCategories();
+    }, 100);
+
+    return () => {
+      console.log('ProductsManagement component unmounting');
+      clearTimeout(timer);
+    };
   }, []);
 
   // Real-time product updates
@@ -83,18 +96,29 @@ const ProductsManagement: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching products...');
+      
       const response = await api.get('/products');
+      console.log('Products API response:', response);
       
       // Handle the API response structure { success: true, data: [...], pagination: {...} }
-      if (response.success && response.data) {
+      if (response && response.success && response.data) {
         setProducts(response.data);
+        console.log('Products set:', response.data);
+      } else if (response && Array.isArray(response)) {
+        setProducts(response);
+        console.log('Products set (array format):', response);
       } else {
+        console.log('No products found in response:', response);
         setProducts([]);
       }
       setError(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching products:', error);
-      setError('Failed to fetch products. Please check if the backend server is running.');
+      setError(error.response?.data?.message || error.message || 'Failed to fetch products. Please check if the backend server is running.');
+      setProducts([]);
       toast({
         title: 'Error',
         description: 'Failed to fetch products',
@@ -107,31 +131,56 @@ const ProductsManagement: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
+      console.log('Fetching categories...');
       const response = await api.get('/categories');
+      console.log('Categories API response:', response);
+      
       // Handle different response formats
-      if (response.success && response.data) {
+      if (response && response.success && response.data) {
         setCategories(response.data);
-      } else if (Array.isArray(response)) {
+        console.log('Categories set:', response.data);
+      } else if (response && Array.isArray(response)) {
         setCategories(response);
+        console.log('Categories set (array format):', response);
       } else {
+        console.log('No categories found in response:', response);
         setCategories([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching categories:', error);
+      setCategories([]);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Transform formData to match backend expectations
+      const productData: any = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        category: formData.category,
+        stockQuantity: parseInt(formData.stock) || 0,
+        image: formData.image || '/placeholder.svg',
+        images: formData.image && formData.image.trim() ? [{ url: formData.image.trim(), alt: formData.name.trim() }] : [{ url: '/placeholder.svg', alt: 'Product image' }]
+      };
+
+      // Only add originalPrice if it has a value
+      if (formData.originalPrice && formData.originalPrice.trim() !== '') {
+        productData.originalPrice = parseFloat(formData.originalPrice);
+      }
+      
+      console.log('Submitting product data:', productData);
+      
       if (editingProduct) {
-        const response = await api.put(`/products/${editingProduct._id}`, formData);
+        await api.put(`/products/${editingProduct._id}`, productData);
         toast({
           title: 'Success',
           description: 'Product updated successfully',
         });
       } else {
-        const response = await api.post('/products', formData);
+        await api.post('/products', productData);
         toast({
           title: 'Success',
           description: 'Product created successfully',
@@ -140,11 +189,30 @@ const ProductsManagement: React.FC = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
+      
+      // Extract specific error message
+      let errorMessage = 'Failed to save product';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // If it's a validation error, show validation details
+      if (error.response?.data?.error?.errors) {
+        const validationErrors = Object.values(error.response.data.error.errors)
+          .map((err: any) => err.message)
+          .join(', ');
+        errorMessage = `Validation Error: ${validationErrors}`;
+      }
+      
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save product',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -152,12 +220,18 @@ const ProductsManagement: React.FC = () => {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    
+    // Extract category ID whether it's populated or not
+    const categoryId = typeof product.category === 'object' 
+      ? product.category._id 
+      : product.category;
+    
     setFormData({
       name: product.name,
       price: product.price.toString(),
       originalPrice: product.originalPrice?.toString() || '',
       description: product.description,
-      category: product.category,
+      category: categoryId,
       stock: product.stock.toString(),
       image: product.image
     });
@@ -197,10 +271,16 @@ const ProductsManagement: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const categoryName = typeof product.category === 'object' 
+      ? product.category.name 
+      : product.category;
+    
+    return product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  console.log('Render state:', { loading, error, products: products.length, filteredProducts: filteredProducts.length });
 
   return (
     <div className="space-y-6 p-6">
@@ -238,7 +318,7 @@ const ProductsManagement: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem key={category._id} value={category.name}>
+                        <SelectItem key={category._id} value={category._id}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -323,7 +403,10 @@ const ProductsManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Loading products...</div>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <p>Loading products...</p>
+            </div>
           ) : error ? (
             <div className="text-center py-8">
               <div className="text-red-600 mb-4">{error}</div>
@@ -331,7 +414,9 @@ const ProductsManagement: React.FC = () => {
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No products found</p>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? `No products found matching "${searchTerm}"` : "No products found"}
+              </p>
               <Button onClick={() => {resetForm(); setIsDialogOpen(true);}}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Product
@@ -362,7 +447,11 @@ const ProductsManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{product.category}</Badge>
+                      <Badge variant="secondary">
+                        {typeof product.category === 'object' 
+                          ? product.category.name 
+                          : product.category}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">

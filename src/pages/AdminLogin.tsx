@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertCircle } from 'lucide-react';
 
 const AdminLogin = () => {
-  const { login, user, isAdmin } = useAuth();
+  const { login, adminLogin, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -40,22 +40,14 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
+      // Use admin login endpoint
+      await adminLogin(formData.email, formData.password);
       
-      // After successful login, we need to wait for context update
-      // The useEffect above will handle redirect for admin users
-      
-      // If login is successful but user is not admin, show error
-      setTimeout(() => {
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (userData && userData.role !== 'admin') {
-          setError('Access denied. Admin privileges required.');
-          setLoading(false);
-        }
-      }, 100);
+      // After successful login, redirect to admin dashboard
+      navigate('/admin/dashboard', { replace: true });
       
     } catch (err: any) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.message || 'Invalid admin credentials');
       setLoading(false);
     }
   };
@@ -144,8 +136,8 @@ const AdminLogin = () => {
                 Admin Credentials
               </h3>
               <div className="mt-2 text-sm text-blue-700">
-                <p>Email: admin@panditji.com</p>
-                <p>Password: admin123</p>
+                <p>Email: abhishek@gmail.com</p>
+                <p>Password: Abhi@1234</p>
               </div>
             </div>
           </div>

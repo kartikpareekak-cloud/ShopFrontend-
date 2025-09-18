@@ -17,6 +17,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useOrderUpdates, useProductUpdates } from '@/contexts/SocketContext';
 import api from '@/lib/api';
 
 interface DashboardStats {
@@ -82,10 +83,6 @@ const AdminDashboard: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -108,21 +105,26 @@ const AdminDashboard: React.FC = () => {
       const customers = customersRes;
       const analytics = customerAnalyticsRes;
 
+      // Ensure orders is an array
+      const ordersArray = Array.isArray(orders) ? orders : [];
+      const productsArray = Array.isArray(products) ? products : [];
+      const customersArray = Array.isArray(customers) ? customers : [];
+
       // Calculate stats
-      const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.total, 0);
-      const pendingOrders = orders.filter((order: any) => order.status === 'pending').length;
-      const lowStockProducts = products.filter((product: any) => product.stock <= 5).length;
+      const totalRevenue = ordersArray.reduce((sum: number, order: any) => sum + order.total, 0);
+      const pendingOrders = ordersArray.filter((order: any) => order.status === 'pending').length;
+      const lowStockProducts = productsArray.filter((product: any) => product.stock <= 5).length;
       
       // Today's orders
       const today = new Date().toDateString();
-      const todayOrders = orders.filter((order: any) => 
+      const todayOrders = ordersArray.filter((order: any) => 
         new Date(order.createdAt).toDateString() === today
       ).length;
 
       // Monthly revenue (current month)
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
-      const monthlyRevenue = orders
+      const monthlyRevenue = ordersArray
         .filter((order: any) => {
           const orderDate = new Date(order.createdAt);
           return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
@@ -130,9 +132,9 @@ const AdminDashboard: React.FC = () => {
         .reduce((sum: number, order: any) => sum + order.total, 0);
 
       setStats({
-        totalProducts: products.length,
-        totalUsers: analytics.totalCustomers || customers.length,
-        totalOrders: orders.length,
+        totalProducts: productsArray.length,
+        totalUsers: analytics.totalCustomers || customersArray.length,
+        totalOrders: ordersArray.length,
         totalRevenue,
         pendingOrders,
         lowStockProducts,
@@ -168,6 +170,20 @@ const AdminDashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Real-time updates for new orders
+  useOrderUpdates(() => {
+    fetchDashboardData();
+  });
+
+  // Real-time updates for product changes
+  useProductUpdates(() => {
+    fetchDashboardData();
+  });
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {

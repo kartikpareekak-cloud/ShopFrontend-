@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Package, Clock, CheckCircle, Truck, MapPin } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, MapPin, ArrowLeft, Home, ShoppingBag, FileText } from 'lucide-react';
 import { AutoFallbackImage } from '@/components/ui/AutoFallbackImage';
+import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 
 interface Order {
@@ -53,35 +54,36 @@ interface Order {
 
 const MyOrders = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await api.get('/orders/my-orders');
-        
-        // Handle different response formats
-        let ordersData = [];
-        if (response.data?.success && response.data?.data) {
-          ordersData = response.data.data;
-        } else if (response.data && Array.isArray(response.data)) {
-          ordersData = response.data;
-        } else if (response && Array.isArray(response)) {
-          ordersData = response;
-        }
-        
-        console.log('Orders response:', response.data);
-        console.log('Parsed orders:', ordersData);
-        setOrders(ordersData);
-      } catch (error) {
-        console.error('Failed to fetch orders:', error);
-        setOrders([]);
-      } finally {
-        setLoading(false);
+  const fetchOrders = async () => {
+    try {
+      const response = await api.get('/orders/my-orders');
+      
+      // Handle different response formats
+      let ordersData = [];
+      if (response.data?.success && response.data?.data) {
+        ordersData = response.data.data;
+      } else if (response.data && Array.isArray(response.data)) {
+        ordersData = response.data;
+      } else if (response && Array.isArray(response)) {
+        ordersData = response;
       }
-    };
+      
+      console.log('Orders response:', response.data);
+      console.log('Parsed orders:', ordersData);
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) {
       fetchOrders();
     }
@@ -148,7 +150,8 @@ const MyOrders = () => {
             <p className="text-muted-foreground mb-6">
               When you place your first order, it will appear here.
             </p>
-            <Button onClick={() => window.location.href = '/'}>
+            <Button onClick={() => navigate('/')}>
+              <Home className="mr-2 h-4 w-4" />
               Start Shopping
             </Button>
           </div>
@@ -160,7 +163,32 @@ const MyOrders = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">My Orders</h1>
+        {/* Navigation Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">My Orders</h1>
+            <p className="text-muted-foreground mt-1">
+              Track and manage your orders
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+            <Button
+              onClick={() => navigate('/products')}
+              className="flex items-center gap-2"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Continue Shopping
+            </Button>
+          </div>
+        </div>
         
         <div className="space-y-6">
           {orders.map((order) => {
@@ -253,14 +281,24 @@ const MyOrders = () => {
                     </div>
                   </div>
 
-                  {/* Track Order Button */}
-                  {(orderStatus === 'confirmed' || orderStatus === 'shipped') && (
-                    <div className="pt-4">
-                      <Button variant="outline" className="w-full sm:w-auto">
+                  {/* Action Buttons */}
+                  <div className="pt-4 flex flex-wrap gap-2">
+                    {(orderStatus === 'confirmed' || orderStatus === 'shipped') && (
+                      <Button variant="outline" className="flex items-center">
                         Track Package
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {order.isPaid !== false && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate(`/invoice/${order._id}`)}
+                        className="flex items-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Invoice
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
