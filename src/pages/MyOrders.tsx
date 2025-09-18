@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrderUpdates } from '@/contexts/SocketContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,13 @@ const MyOrders = () => {
       fetchOrders();
     }
   }, [user]);
+
+  // Real-time order updates
+  useOrderUpdates(() => {
+    if (user) {
+      fetchOrders();
+    }
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {

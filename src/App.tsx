@@ -5,9 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/AdminLayout";
 import Index from "./pages/Index";
+import Products from "./pages/Products";
 import SearchResults from "./pages/SearchResults";
 import SearchPage from "./pages/SearchPage";
 import ProductDetail from "./pages/ProductDetail";
@@ -43,13 +45,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <SocketProvider>
+          <TooltipProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/search-advanced" element={<SearchPage />} />
             <Route path="/product/:id" element={<ProductDetail />} />
@@ -116,8 +120,9 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-          </ErrorBoundary>
-        </TooltipProvider>
+            </ErrorBoundary>
+          </TooltipProvider>
+        </SocketProvider>
       </AuthProvider>
     </HelmetProvider>
   </QueryClientProvider>

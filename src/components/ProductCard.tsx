@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Star } from "lucide-react";
 
-interface Product {
+interface ProductCardProps {
   id: string;
   name: string;
   price: number;
@@ -13,29 +13,140 @@ interface Product {
   isHot?: boolean;
   isDiscount?: boolean;
   rating?: number;
+  inStock?: boolean;
+  viewMode?: 'grid' | 'list';
+  onAddToCart: () => void;
 }
 
-interface ProductCardProps {
-  product: Product;
-  onAddToCart: (product: Product) => void;
-}
-
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+const ProductCard = ({ 
+  name, 
+  price, 
+  originalPrice, 
+  image, 
+  category, 
+  isHot, 
+  isDiscount, 
+  rating, 
+  inStock = true,
+  viewMode = 'grid',
+  onAddToCart 
+}: ProductCardProps) => {
+  const discountPercentage = originalPrice 
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
+
+  if (viewMode === 'list') {
+    return (
+      <Card className="group hover:shadow-lg transition-all duration-300 bg-card">
+        <div className="flex">
+          {/* Product Image */}
+          <div className="relative w-48 h-48 flex-shrink-0 overflow-hidden rounded-l-lg">
+            {/* Badges */}
+            <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+              {isHot && (
+                <Badge className="bg-primary text-primary-foreground font-semibold">
+                  HOT
+                </Badge>
+              )}
+              {isDiscount && discountPercentage > 0 && (
+                <Badge variant="destructive" className="font-semibold">
+                  -{discountPercentage}%
+                </Badge>
+              )}
+            </div>
+
+            <div className="w-full h-full bg-muted/30 flex items-center justify-center overflow-hidden">
+              <img 
+                src={image} 
+                alt={name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          </div>
+
+          {/* Product Details */}
+          <CardContent className="flex-1 p-6">
+            <div className="flex justify-between items-start h-full">
+              <div className="flex-1">
+                {/* Category */}
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  {category}
+                </p>
+
+                {/* Product Name */}
+                <h3 className="font-semibold text-automotive mb-2 text-lg">
+                  {name}
+                </h3>
+
+                {/* Rating */}
+                {rating && (
+                  <div className="flex items-center gap-1 mb-3">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < Math.floor(rating) 
+                              ? 'text-yellow-500 fill-current' 
+                              : 'text-muted-foreground'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground">({rating})</span>
+                  </div>
+                )}
+
+                {/* Stock Status */}
+                <div className="mb-3">
+                  <span className={`text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
+                    {inStock ? 'In Stock' : 'Out of Stock'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="ml-6 text-right">
+                {/* Price */}
+                <div className="mb-4">
+                  <span className="text-xl font-bold text-automotive">
+                    ₹{price.toLocaleString()}
+                  </span>
+                  {originalPrice && (
+                    <div className="text-sm text-muted-foreground line-through">
+                      ₹{originalPrice.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add to Cart Button */}
+                <Button 
+                  className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  variant="outline"
+                  onClick={onAddToCart}
+                  disabled={!inStock}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {inStock ? 'Add to Cart' : 'Out of Stock'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card">
       <div className="relative overflow-hidden rounded-t-lg">
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
-          {product.isHot && (
+          {isHot && (
             <Badge className="bg-primary text-primary-foreground font-semibold">
               HOT
             </Badge>
           )}
-          {product.isDiscount && discountPercentage > 0 && (
+          {isDiscount && discountPercentage > 0 && (
             <Badge variant="destructive" className="font-semibold">
               -{discountPercentage}%
             </Badge>
@@ -45,8 +156,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         {/* Product Image */}
         <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
           <img 
-            src={product.image} 
-            alt={product.name}
+            src={image} 
+            alt={name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
@@ -55,41 +166,48 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       <CardContent className="p-4">
         {/* Category */}
         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
-          {product.category}
+          {category}
         </p>
 
         {/* Product Name */}
         <h3 className="font-semibold text-automotive mb-2 line-clamp-2 leading-tight">
-          {product.name}
+          {name}
         </h3>
 
         {/* Rating */}
-        {product.rating && (
+        {rating && (
           <div className="flex items-center gap-1 mb-3">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i}
                   className={`h-3 w-3 ${
-                    i < Math.floor(product.rating!) 
+                    i < Math.floor(rating) 
                       ? 'text-yellow-500 fill-current' 
                       : 'text-muted-foreground'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-xs text-muted-foreground">({product.rating})</span>
+            <span className="text-xs text-muted-foreground">({rating})</span>
+          </div>
+        )}
+
+        {/* Stock Status */}
+        {!inStock && (
+          <div className="mb-3">
+            <span className="text-sm text-red-600">Out of Stock</span>
           </div>
         )}
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-4">
           <span className="text-lg font-bold text-automotive">
-            ₹{product.price.toLocaleString()}
+            ₹{price.toLocaleString()}
           </span>
-          {product.originalPrice && (
+          {originalPrice && (
             <span className="text-sm text-muted-foreground line-through">
-              ₹{product.originalPrice.toLocaleString()}
+              ₹{originalPrice.toLocaleString()}
             </span>
           )}
         </div>
@@ -98,10 +216,11 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         <Button 
           className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
           variant="outline"
-          onClick={() => onAddToCart(product)}
+          onClick={onAddToCart}
+          disabled={!inStock}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          Add to Cart
+          {inStock ? 'Add to Cart' : 'Out of Stock'}
         </Button>
       </CardContent>
     </Card>

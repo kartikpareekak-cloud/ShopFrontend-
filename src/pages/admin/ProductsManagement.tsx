@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useProductUpdates } from '@/contexts/SocketContext';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -74,6 +75,11 @@ const ProductsManagement: React.FC = () => {
     fetchProducts();
     fetchCategories();
   }, []);
+
+  // Real-time product updates
+  useProductUpdates(() => {
+    fetchProducts();
+  });
 
   const fetchProducts = async () => {
     try {

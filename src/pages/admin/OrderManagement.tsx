@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Eye, Package, Truck, CheckCircle, XCircle, Phone, Mail, MapPin } from 'lucide-react';
 import { AutoFallbackImage } from '../../components/ui/AutoFallbackImage';
+import { useOrderUpdates } from '@/contexts/SocketContext';
 import api from '../../lib/api';
 import type { OrderStatus } from '@/types/global';
 
@@ -57,6 +58,11 @@ const OrderManagement = () => {
   useEffect(() => {
     fetchOrders();
   }, [statusFilter]);
+
+  // Real-time order updates
+  useOrderUpdates(() => {
+    fetchOrders();
+  });
 
   const fetchOrders = async () => {
     setLoading(true);

@@ -169,9 +169,18 @@ const ProductGrid = ({ onAddToCart }: ProductGridProps) => {
           ) : (
             filteredProducts.map((product) => (
               <ProductCard 
-                key={product.id || product._id} 
-                product={product} 
-                onAddToCart={onAddToCart}
+                key={product.id || product._id}
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                originalPrice={product.originalPrice}
+                image={product.image}
+                category={product.category}
+                isHot={product.isHot}
+                isDiscount={product.isDiscount}
+                rating={product.rating}
+                inStock={true}
+                onAddToCart={() => onAddToCart(product)}
               />
             ))
           )}
